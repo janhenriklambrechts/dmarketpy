@@ -20,9 +20,10 @@ def accounting_offers():
                 "DateStart": 3}
     urlpath="trading/v1/report/accounting/offers"
     # authentication key required, so we use private_query.
-    # this is a GET request so we take "GET" as a type
+    # this is a POST request so we take "POST" as a type
     # our body request goes straight into json
     print(api.private_query(urlpath=urlpath,type="POST",json=payload))
+
 
 print("\n Games \n")
 games()

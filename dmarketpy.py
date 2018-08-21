@@ -1,5 +1,6 @@
 import requests
 import json
+import ast
 
 key = ""
 class API(object):
@@ -35,12 +36,12 @@ class API(object):
         :param params:params: API request parameters
         :type params: dict
         :param timeout:(optional) if not ``None``
-        :return: response.text, JSON object
+        :return: API-response, dict
         """
         if params is None:
             params = {}
 
-        return self.get_query(urlpath,params=params,timeout=timeout)
+        return self.encoder(self.get_query(urlpath=urlpath,params=params,timeout=timeout))
 
     def private_query(self, type, urlpath, json=None, params=None, timeout=None):
         """
@@ -53,7 +54,7 @@ class API(object):
         :param params: params: API request parameters
         :type params: dict
         :param timeout: timeout: (optional) if not ``None``
-        :return: response.txt, JSON object
+        :return: API-response, dict
         :raises Exception when API-key is not set
         """
         if json is None:
@@ -69,23 +70,23 @@ class API(object):
         }
 
         if type == "GET":
-            return self.get_query(operation=urlpath,headers=headers,params=params,timeout=timeout)
+            return self.encoder(self.get_query(urlpath=urlpath,headers=headers,params=params,timeout=timeout))
         if type == "POST":
-            return self.post_query(operation=urlpath,headers=headers,json=json,params=params,timeout=timeout)
+            return self.encoder(self.post_query(urlpath=urlpath,headers=headers,json=json))
 
-    def get_query(self, operation, headers=None, params=None, timeout=None):
+    def get_query(self, urlpath, headers=None, params=None, timeout=None):
         """ GET-query handling
 
         --- use public_query() or private_query() unless you have a good reason not to ---
 
-        :param operation: API URL path without "https://dmarket.com/"
-        :type operation: str
+        :param urlpath: API URL path without "https://dmarket.com/"
+        :type urlpath: str
         :param headers: (optional) HTTPS headers
         :type headers: dict
         :param params: API request parameters
         :type params: dict
         :param timeout: (optional) if not ``None``
-        :returns: response.txt, JSON object
+        :returns: API response, str
         :raises: :py:exc:`requests.HTTPError`: if response status not successful
 
         """
@@ -94,7 +95,7 @@ class API(object):
         if headers is None:
             headers = {}
 
-        url = self.url + operation
+        url = self.url + urlpath
         response = requests.get(url, headers=headers, params=params,
                                 timeout=timeout)
         if response.status_code not in (200, 201, 202):
@@ -102,13 +103,13 @@ class API(object):
 
         return response.text
 
-    def post_query(self, operation, headers=None, json=None, params=None, timeout=None):
+    def post_query(self, urlpath, headers=None, json=None, params=None, timeout=None):
         """Post-query handling
 
         --- use public_query() or private_query() unless you have a good reason not to ---
 
-        :param operation:
-        :type operation: str
+        :param urlpath:
+        :type urlpath: str
         :param headers:
         :type headers: dict
         :param json:  API request body
@@ -116,7 +117,7 @@ class API(object):
         :param params: API request parameters
         :type params: dict
         :param timeout: (optional) if not ``None``
-        :return: respons.txt, JSON object
+        :return: API-response, str
         :raises: py:exc:`requests.HTTPError`: if response status not successful
         """
 
@@ -128,14 +129,23 @@ class API(object):
         if headers is None:
             headers = {}
 
-        url = self.url + operation
+        url = self.url + urlpath
+        print(url)
+        print(headers)
+        print(json)
 
-        response = requests.post(url, headers=headers, params=params, json=json,
-                                 timeout=timeout)
+        response = requests.post(url=url, headers=headers, params=params, json=json, timeout=timeout)
         if response.status_code not in (200, 201, 202):
             response.raise_for_status()
 
         return response.text
 
-
-
+    def encoder(self,json_data):
+        """
+        Modifies the JSON-string for dict modification
+        :param json_data: string in JSON form
+        :return: dict
+        """
+        json_data= json_data.replace("false","False")
+        json_data= json_data.replace("true","True")
+        return ast.literal_eval(json_data)
